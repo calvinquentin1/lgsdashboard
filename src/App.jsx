@@ -290,7 +290,6 @@ export default function App() {
       ...base,
       totalBooked,
       totalCallsHad: setPastData.length - base.totalReschedules,
-      discoveryToHotLeadRate: totalBooked > 0 ? (base.totalHotLeads / totalBooked) * 100 : 0,
     }
   }, [setPastData, setSourceData])
 
@@ -554,11 +553,6 @@ export default function App() {
           <StatCard label="Total Shows"            value={sm.totalShows}    color="green" />
           <StatCard label="No Shows"               value={sm.totalNoShows}  color="red" />
           <StatCard label="Cancels"                value={sm.totalCancels}  color="yellow" />
-          <StatCard
-            label="Discovery-to-Hot Lead Rate"
-            value={fmtPct(sm.discoveryToHotLeadRate)}
-            color={sm.discoveryToHotLeadRate >= 20 ? 'green' : sm.discoveryToHotLeadRate >= 10 ? 'yellow' : 'red'}
-          />
           <StatCard
             label="Show Rate (First Call)"
             value={fmtPct(sm.showRate)}
