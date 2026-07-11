@@ -491,7 +491,9 @@ export default function App() {
         <div className="cards-grid">
           <StatCard label="Discoveries Booked"     value={dm.totalBooked} />
           <StatCard label="First Calls Had"        value={dm.totalCallsHad} color="blue" />
+          <StatCard label="Total Shows"            value={dm.totalShows}    color="green" />
           <StatCard label="No Shows"               value={dm.totalNoShows}  color="red" />
+          <StatCard label="Cancels"                value={dm.totalCancels}  color="yellow" />
           <StatCard
             label="Show Rate (First Call)"
             value={fmtPct(dm.showRate)}
