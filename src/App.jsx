@@ -256,8 +256,43 @@ export default function App() {
       ...base,
       totalBooked,
       totalCallsHad: discoveryPastData.length - base.totalReschedules,
+      discoveryToHotLeadRate: totalBooked > 0 ? (base.totalHotLeads / totalBooked) * 100 : 0,
     }
   }, [discoveryPastData, discoveryData])
+
+  // Set stats — scoped to manually Set-sourced calls only, regardless of the Call Type filter above
+  const isSetSourced = r => (r.callType || '').trim().toLowerCase().startsWith('set')
+
+  const setSourceData = useMemo(() => rawData.filter(r => {
+    if (closer !== 'All' && r.closer !== closer) return false
+    if (!isSetSourced(r)) return false
+    if (startDate || endDate) {
+      const ds = getDateStr(r.date)
+      if (!ds) return false
+      if (startDate && ds < startDate) return false
+      if (endDate   && ds > endDate)   return false
+    }
+    return true
+  }), [rawData, closer, startDate, endDate])
+
+  const setPastData = useMemo(() => setSourceData.filter(r => {
+    const ds = getDateStr(r.date)
+    if (!ds) return true
+    if (ds < todayStr) return true
+    if (ds === todayStr) return !!(r.outcome && r.outcome.trim())
+    return false
+  }), [setSourceData, todayStr])
+
+  const sm = useMemo(() => {
+    const base        = computeMetrics(setPastData)
+    const totalBooked = setSourceData.length
+    return {
+      ...base,
+      totalBooked,
+      totalCallsHad: setPastData.length - base.totalReschedules,
+      discoveryToHotLeadRate: totalBooked > 0 ? (base.totalHotLeads / totalBooked) * 100 : 0,
+    }
+  }, [setPastData, setSourceData])
 
   const outcomeData = useMemo(() => {
     const g = {}
@@ -495,6 +530,11 @@ export default function App() {
           <StatCard label="No Shows"               value={dm.totalNoShows}  color="red" />
           <StatCard label="Cancels"                value={dm.totalCancels}  color="yellow" />
           <StatCard
+            label="Discovery-to-Hot Lead Rate"
+            value={fmtPct(dm.discoveryToHotLeadRate)}
+            color={dm.discoveryToHotLeadRate >= 20 ? 'green' : dm.discoveryToHotLeadRate >= 10 ? 'yellow' : 'red'}
+          />
+          <StatCard
             label="Show Rate (First Call)"
             value={fmtPct(dm.showRate)}
             color={dm.showRate >= 70 ? 'green' : dm.showRate >= 50 ? 'yellow' : 'red'}
@@ -503,6 +543,31 @@ export default function App() {
             label="Show-to-Close Rate"
             value={fmtPct(dm.closeRate)}
             color={dm.closeRate >= 25 ? 'green' : dm.closeRate >= 15 ? 'yellow' : 'red'}
+          />
+        </div>
+
+        {/* SET STATS */}
+        <SectionHeader title="Set Stats (Manually Set only)" />
+        <div className="cards-grid">
+          <StatCard label="Discoveries Booked"     value={sm.totalBooked} />
+          <StatCard label="First Calls Had"        value={sm.totalCallsHad} color="blue" />
+          <StatCard label="Total Shows"            value={sm.totalShows}    color="green" />
+          <StatCard label="No Shows"               value={sm.totalNoShows}  color="red" />
+          <StatCard label="Cancels"                value={sm.totalCancels}  color="yellow" />
+          <StatCard
+            label="Discovery-to-Hot Lead Rate"
+            value={fmtPct(sm.discoveryToHotLeadRate)}
+            color={sm.discoveryToHotLeadRate >= 20 ? 'green' : sm.discoveryToHotLeadRate >= 10 ? 'yellow' : 'red'}
+          />
+          <StatCard
+            label="Show Rate (First Call)"
+            value={fmtPct(sm.showRate)}
+            color={sm.showRate >= 70 ? 'green' : sm.showRate >= 50 ? 'yellow' : 'red'}
+          />
+          <StatCard
+            label="Show-to-Close Rate"
+            value={fmtPct(sm.closeRate)}
+            color={sm.closeRate >= 25 ? 'green' : sm.closeRate >= 15 ? 'yellow' : 'red'}
           />
         </div>
 

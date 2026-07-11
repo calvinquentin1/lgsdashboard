@@ -101,6 +101,7 @@ export function computeMetrics(rows) {
   const totalCash        = rows.reduce((s, r) => s + parseCash(r.cash), 0)
   const totalValue       = rows.reduce((s, r) => s + parseCash(r.totalValue || r.cash), 0)
   const hotFollowUps     = rows.filter(r => r.outcome === 'Follow Up (Hot)').length
+  const totalHotLeads    = rows.filter(r => r.outcome === 'Hot Lead').length
 
   const callsHad = totalBooked - totalReschedules
 
@@ -130,6 +131,7 @@ export function computeMetrics(rows) {
     showRate:      callsHad > 0    ? (totalShows / callsHad)   * 100 : 0,
     closeRate:     totalShows > 0  ? (totalWins  / totalShows) * 100 : 0,
     hotFollowUps,
+    totalHotLeads,
     totalCash,
     totalValue,
     avgDealSize:   totalWins > 0   ? totalCash / totalWins   : 0,
