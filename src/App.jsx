@@ -226,6 +226,39 @@ export default function App() {
     }
   }, [pastData, filteredData])
 
+  // Discovery / ad booking stats — scoped to Meta-sourced calls only, regardless of the Call Type filter above
+  const isMetaSourced = r => (r.callType || '').trim().toLowerCase().startsWith('meta')
+
+  const discoveryData = useMemo(() => rawData.filter(r => {
+    if (closer !== 'All' && r.closer !== closer) return false
+    if (!isMetaSourced(r)) return false
+    if (startDate || endDate) {
+      const ds = getDateStr(r.date)
+      if (!ds) return false
+      if (startDate && ds < startDate) return false
+      if (endDate   && ds > endDate)   return false
+    }
+    return true
+  }), [rawData, closer, startDate, endDate])
+
+  const discoveryPastData = useMemo(() => discoveryData.filter(r => {
+    const ds = getDateStr(r.date)
+    if (!ds) return true
+    if (ds < todayStr) return true
+    if (ds === todayStr) return !!(r.outcome && r.outcome.trim())
+    return false
+  }), [discoveryData, todayStr])
+
+  const dm = useMemo(() => {
+    const base        = computeMetrics(discoveryPastData)
+    const totalBooked = discoveryData.length
+    return {
+      ...base,
+      totalBooked,
+      totalCallsHad: discoveryPastData.length - base.totalReschedules,
+    }
+  }, [discoveryPastData, discoveryData])
+
   const outcomeData = useMemo(() => {
     const g = {}
     pastData.forEach(r => {
@@ -451,6 +484,23 @@ export default function App() {
           <StatCard label="Avg Deal Size"           value={fmt$(m.avgDealSize)} />
           <StatCard label="Cash / Booked Call"      value={fmt$(m.cashPerBooked)} />
           <StatCard label="Cash / Shown Call"       value={fmt$(m.cashPerShown)} />
+        </div>
+
+        {/* DISCOVERY / AD BOOKING STATS */}
+        <SectionHeader title="Discovery / Ad Booking Stats (Meta only)" />
+        <div className="cards-grid">
+          <StatCard label="Discoveries Booked"     value={dm.totalBooked} />
+          <StatCard label="First Calls Had"        value={dm.totalCallsHad} color="blue" />
+          <StatCard
+            label="Show Rate (First Call)"
+            value={fmtPct(dm.showRate)}
+            color={dm.showRate >= 70 ? 'green' : dm.showRate >= 50 ? 'yellow' : 'red'}
+          />
+          <StatCard
+            label="Show-to-Close Rate"
+            value={fmtPct(dm.closeRate)}
+            color={dm.closeRate >= 25 ? 'green' : dm.closeRate >= 15 ? 'yellow' : 'red'}
+          />
         </div>
 
         {/* CHARTS */}
